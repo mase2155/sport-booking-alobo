@@ -44,18 +44,28 @@ async function findAuthByEmail(email, tx) {
 
 async function createUser({ fullName, email, passwordHash, phone, role }, tx) {
   const request = await createRequest(tx);
-  const result = await request
+  const maxResult = await request.query(`
+    SELECT ISNULL(MAX(UserId), 0) AS maxId FROM dbo.Users WITH (UPDLOCK, HOLDLOCK)
+  `);
+  const nextId = maxResult.recordset[0].maxId + 1;
+
+  await request
+    .input('id', sql.Int, nextId)
     .input('fullName', sql.NVarChar(100), fullName)
     .input('email', sql.NVarChar(150), email)
     .input('passwordHash', sql.NVarChar(255), passwordHash)
     .input('phone', sql.VarChar(20), phone ?? null)
     .input('role', sql.NVarChar(20), role)
     .query(`
-      INSERT INTO dbo.Users (FullName, Email, PasswordHash, Phone, Role)
-      OUTPUT INSERTED.UserId AS id
-      VALUES (@fullName, @email, @passwordHash, @phone, @role)
+      SET IDENTITY_INSERT dbo.Users ON;
+      INSERT INTO dbo.Users (UserId, FullName, Email, PasswordHash, Phone, Role)
+      VALUES (@id, @fullName, @email, @passwordHash, @phone, @role);
+      SET IDENTITY_INSERT dbo.Users OFF;
     `);
-  return findById(result.recordset[0].id, tx);
+
+  await request.input('seed', sql.Int, nextId).query(`DBCC CHECKIDENT ('dbo.Users', RESEED, @seed)`);
+
+  return findById(nextId, tx);
 }
 
 async function updateProfile(id, { fullName, phone }, tx) {
@@ -107,7 +117,7 @@ async function listUsers({ page, limit, keyword, role, isActive }, tx) {
     SELECT ${PUBLIC_USER_COLUMNS}, COUNT(*) OVER() AS totalCount
     FROM dbo.Users
     ${where}
-    ORDER BY CreatedAt DESC
+    ORDER BY UserId ASC
     OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
   `);
   const total = result.recordset[0]?.totalCount ?? 0;

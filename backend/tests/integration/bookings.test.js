@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../../src/app');
-const { addDays, today } = require('../../src/utils/datetime');
+const { pickFreeBookableSlot } = require('../helpers/pickFreeSlot');
 
 const unique = () => `test_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
@@ -21,36 +21,20 @@ async function registerAndLogin(agent) {
   };
 }
 
-async function pickBookableSlot(agent, token) {
-  const fieldsRes = await agent
-    .get('/api/v1/fields')
-    .set('Authorization', `Bearer ${token}`)
-    .query({ limit: 5, status: 'Active' });
-  expect(fieldsRes.status).toBe(200);
-  const field = fieldsRes.body.data?.[0];
-  if (!field) return null;
-
-  const slotsRes = await agent
-    .get('/api/v1/time-slots')
-    .query({ fieldTypeId: field.fieldTypeId });
-  expect(slotsRes.status).toBe(200);
-  const slot = slotsRes.body.data.find((s) => s.isActive) ?? slotsRes.body.data[0];
-  expect(slot).toBeDefined();
-
-  return { field, slot };
+async function pickBookableSlot(agent) {
+  return pickFreeBookableSlot(agent);
 }
 
 describe('bookings API (CSDL thật)', () => {
   test('đặt sân và chống trùng khung giờ trả 409', async () => {
     const agent = request(app);
     const { token } = await registerAndLogin(agent);
-    const picked = await pickBookableSlot(agent, token);
+    const picked = await pickBookableSlot(agent);
     if (!picked) {
       // Cần npm run db:seed và CSDL SportBooking
       return;
     }
-    const { field, slot } = picked;
-    const bookingDate = addDays(today(), 7);
+    const { field, slot, bookingDate } = picked;
 
     const payload = {
       fieldId: field.id,
@@ -81,10 +65,9 @@ describe('bookings API (CSDL thật)', () => {
     const agent = request(app);
     const { token: token1 } = await registerAndLogin(agent);
     const { token: token2 } = await registerAndLogin(agent);
-    const picked = await pickBookableSlot(agent, token1);
+    const picked = await pickBookableSlot(agent);
     if (!picked) return;
-    const { field, slot } = picked;
-    const bookingDate = addDays(today(), 15);
+    const { field, slot, bookingDate } = picked;
 
     const payload = {
       fieldId: field.id,
@@ -111,10 +94,9 @@ describe('bookings API (CSDL thật)', () => {
   test('khách hủy đơn Pending của mình', async () => {
     const agent = request(app);
     const { token } = await registerAndLogin(agent);
-    const picked = await pickBookableSlot(agent, token);
+    const picked = await pickBookableSlot(agent);
     if (!picked) return;
-    const { field, slot } = picked;
-    const bookingDate = addDays(today(), 8);
+    const { field, slot, bookingDate } = picked;
 
     const created = await agent
       .post('/api/v1/bookings')

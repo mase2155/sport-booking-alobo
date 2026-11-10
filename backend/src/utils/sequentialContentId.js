@@ -1,4 +1,4 @@
-const { sql, createRequest } = require('../config/database');
+const { createRequest } = require('../config/database');
 
 const TABLE_CONFIG = Object.freeze({
   partnerItems: { table: 'dbo.PartnerItems', idColumn: 'PartnerItemId' },

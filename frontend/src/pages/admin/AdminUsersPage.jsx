@@ -30,7 +30,10 @@ export default function AdminUsersPage() {
     queryFn: () => fetchAdminUsersApi(filters),
   });
 
-  const items = data?.items ?? [];
+  const items = useMemo(
+    () => [...(data?.items ?? [])].sort((a, b) => a.id - b.id),
+    [data?.items],
+  );
   const editingUser = items.find((u) => u.id === editingId) ?? null;
 
   const saveMutation = useMutation({
@@ -139,7 +142,7 @@ export default function AdminUsersPage() {
             <table className="table table-hover table-crud align-middle">
               <thead>
                 <tr>
-                  <th>ID</th>
+                  <th>ID ↑</th>
                   <th>Họ tên</th>
                   <th>Email</th>
                   <th>SĐT</th>

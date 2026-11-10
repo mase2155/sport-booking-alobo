@@ -9,13 +9,16 @@
   },
   "scripts": {
     "start": "node src/server.js",
+    "predev": "node scripts/free-port.js 5000",
     "dev": "node --watch src/server.js",
     "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed.js",
+    "db:sync-admin": "node scripts/sync-admin-from-env.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"{src,scripts,tests}/**/*.js\"",
-    "test": "jest"
+    "test": "jest",
+    "verify": "npm run lint && npm test"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

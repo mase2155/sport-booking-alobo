@@ -23,4 +23,12 @@ module.exports = [
     files: ['tests/**/*.js'],
     languageOptions: { globals: { ...globals.jest } },
   },
+  {
+    files: [
+      'scripts/run-smoke-report.js',
+      'scripts/free-port.js',
+      'scripts/sync-admin-from-env.js',
+    ],
+    rules: { 'no-console': 'off' },
+  },
 ];

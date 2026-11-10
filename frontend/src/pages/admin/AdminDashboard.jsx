@@ -1,26 +1,23 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ROUTES } from '../../constants/routes';
 import { queryKeys } from '../../constants/queryKeys';
 import { fetchNewsPostsApi } from '../../features/newsPosts/newsPosts.api';
 import { fetchPartnerItemsApi } from '../../features/partnerItems/partnerItems.api';
-import RevenueChart from '../../features/stats/components/RevenueChart';
 import {
   fetchStatsFieldsApi,
   fetchStatsOverviewApi,
   fetchStatsRevenueApi,
 } from '../../features/stats/stats.api';
-import { formatCurrency } from '../../utils/format';
-import { addDaysToDateInput, todayDateInput } from '../../utils/date';
+import { formatCurrency, formatDate } from '../../utils/format';
+import { todayDateInput } from '../../utils/date';
 
 const base = ROUTES.admin;
 
 export default function AdminDashboard() {
-  const [groupBy, setGroupBy] = useState('day');
-  const [fromDate, setFromDate] = useState(addDaysToDateInput(todayDateInput(), -30));
-  const [toDate, setToDate] = useState(todayDateInput());
-  const [appliedRange, setAppliedRange] = useState({ fromDate, toDate, groupBy });
+  const [reportDate, setReportDate] = useState(todayDateInput());
+  const [appliedDate, setAppliedDate] = useState(todayDateInput());
 
   const { data: newsMeta } = useQuery({
     queryKey: queryKeys.newsPosts({ admin: true }),
@@ -36,12 +33,12 @@ export default function AdminDashboard() {
   });
 
   const revenueQuery = useQuery({
-    queryKey: queryKeys.adminStatsRevenue(appliedRange),
+    queryKey: queryKeys.adminStatsRevenue({ date: appliedDate }),
     queryFn: () =>
       fetchStatsRevenueApi({
-        groupBy: appliedRange.groupBy,
-        fromDate: appliedRange.fromDate,
-        toDate: appliedRange.toDate,
+        groupBy: 'day',
+        fromDate: appliedDate,
+        toDate: appliedDate,
       }),
   });
 
@@ -52,11 +49,21 @@ export default function AdminDashboard() {
 
   const applyRevenueFilter = (e) => {
     e.preventDefault();
-    setAppliedRange({ fromDate, toDate, groupBy });
+    setAppliedDate(reportDate);
   };
 
   const revenuePoints = revenueQuery.data ?? [];
   const fieldStats = fieldsStatsQuery.data ?? [];
+
+  const periodTotals = useMemo(() => {
+    let paidBookings = 0;
+    let revenue = 0;
+    for (const row of revenuePoints) {
+      paidBookings += row.paidBookings ?? 0;
+      revenue += row.revenue ?? 0;
+    }
+    return { paidBookings, revenue };
+  }, [revenuePoints]);
 
   return (
     <>
@@ -117,32 +124,16 @@ export default function AdminDashboard() {
       )}
 
       <div className="card mt-3">
-        <div className="card-header">Doanh thu theo {appliedRange.groupBy === 'month' ? 'tháng' : 'ngày'}</div>
+        <div className="card-header">Doanh thu theo ngày</div>
         <div className="card-body">
           <form className="row g-2 align-items-end mb-3" onSubmit={applyRevenueFilter}>
-            <div className="col-md-2">
-              <label className="form-label small">Nhóm theo</label>
-              <select className="form-select form-select-sm" value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
-                <option value="day">Ngày</option>
-                <option value="month">Tháng</option>
-              </select>
-            </div>
-            <div className="col-md-3">
-              <label className="form-label small">Từ ngày</label>
+            <div className="col-md-4">
+              <label className="form-label small">Ngày</label>
               <input
                 type="date"
                 className="form-control form-control-sm"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-              />
-            </div>
-            <div className="col-md-3">
-              <label className="form-label small">Đến ngày</label>
-              <input
-                type="date"
-                className="form-control form-control-sm"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
+                value={reportDate}
+                onChange={(e) => setReportDate(e.target.value)}
               />
             </div>
             <div className="col-md-2">
@@ -154,31 +145,20 @@ export default function AdminDashboard() {
           {revenueQuery.isLoading && <p className="text-muted mb-0">Đang tải doanh thu…</p>}
           {revenueQuery.isError && <p className="text-danger mb-0">Không tải được dữ liệu doanh thu.</p>}
           {!revenueQuery.isLoading && !revenueQuery.isError && (
-            <>
-              <RevenueChart points={revenuePoints} groupBy={appliedRange.groupBy} />
-              {revenuePoints.length > 0 && (
-                <div className="table-responsive mt-3">
-                  <table className="table table-sm table-bordered mb-0">
-                    <thead>
-                      <tr>
-                        <th>Kỳ</th>
-                        <th>Số đơn đã thu</th>
-                        <th>Doanh thu</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {revenuePoints.map((row) => (
-                        <tr key={row.period}>
-                          <td>{row.period}</td>
-                          <td>{row.paidBookings ?? 0}</td>
-                          <td>{formatCurrency(row.revenue)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+            <div className="row g-3">
+              <div className="col-md-6">
+                <div className="border rounded p-3 bg-light">
+                  <div className="small text-muted">Số đơn xử lý (đã thu ngày {formatDate(appliedDate)})</div>
+                  <div className="fs-4 fw-semibold mb-0">{periodTotals.paidBookings}</div>
                 </div>
-              )}
-            </>
+              </div>
+              <div className="col-md-6">
+                <div className="border rounded p-3 bg-light">
+                  <div className="small text-muted">Tổng doanh thu (ngày {formatDate(appliedDate)})</div>
+                  <div className="fs-4 fw-semibold mb-0">{formatCurrency(periodTotals.revenue)}</div>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>

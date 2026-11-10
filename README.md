@@ -12,25 +12,26 @@ copy .env.example .env   # chỉnh DB_*, JWT_ACCESS_SECRET, ADMIN_EMAIL / ADMIN_
 npm install
 npm run db:migrate
 npm run db:seed
-npm run dev
+npm run dev              # tự giải phóng cổng 5000 nếu còn Node cũ
 
 cd ../frontend
 copy .env.example .env   # tùy chọn; mặc định proxy Vite → backend
 npm install
-npm run dev
+npm run dev              # tự giải phóng cổng 5173 nếu còn Node cũ
 ```
 
 - Frontend: http://localhost:5173  
 - API: http://localhost:5000/api/v1  
 - Admin: đăng nhập bằng tài khoản tạo từ `ADMIN_*` trong `backend/.env` (sau `db:seed`), vào `/admin`
 
-Kiểm thử backend (cần CSDL đã migrate/seed):
+Kiểm thử local (cần CSDL đã migrate/seed):
 
 ```powershell
 cd backend
-npm test
-npm run lint
+npm run verify
 ```
+
+Chi tiết: `docs/local-verify.md`
 
 Build frontend: `cd frontend && npm run build`
 

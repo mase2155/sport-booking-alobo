@@ -16,6 +16,17 @@ async function start() {
     logger.info(`API đang chạy tại http://localhost:${config.port}/api/v1 (${config.env})`);
   });
 
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      logger.fatal(
+        `Cổng ${config.port} đã có tiến trình khác (thường là lần npm start/dev cũ). Tắt Node đó rồi chạy lại.`,
+      );
+    } else {
+      logger.fatal({ err: error }, 'Không thể lắng nghe cổng API');
+    }
+    process.exit(1);
+  });
+
   let shuttingDown = false;
   const shutdown = (signal) => {
     if (shuttingDown) return;

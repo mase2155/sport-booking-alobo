@@ -8,7 +8,7 @@ Môi trường: backend `http://localhost:5000/api/v1`, frontend Vite `http://lo
 |----|------|------------------|
 | TC-SEARCH-01 | Mở `/search`, không nhập gì, bấm Tìm | Danh sách sân Active từ seed |
 | TC-SEARCH-02 | Nhập từ khóa trùng tên một sân, Tìm | Chỉ sân khớp tên |
-| TC-SEARCH-03 | Chọn loại sân + ngày chơi, Tìm | API lọc theo `fieldTypeId` và `bookingDate` |
+| TC-SEARCH-03 | Chọn loại sân + ngày + khung giờ, Tìm | API lọc theo `fieldTypeId`, `bookingDate`, `timeSlotId` |
 | TC-SEARCH-04 | Từ khóa không khớp sân nào | Thông báo không tìm thấy |
 
 ## 2. Đặt trùng khung giờ (409)
