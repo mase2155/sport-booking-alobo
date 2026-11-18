@@ -31,6 +31,10 @@ backend/uploads/*
 coverage/
 .nyc_output/
 
+# Word / báo cáo (chỉ lưu local)
+~$*
+*.docx
+
 # OS
 .DS_Store
 Thumbs.db
