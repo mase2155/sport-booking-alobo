@@ -1,60 +1,153 @@
-# Website đặt sân thể thao trực tuyến
+# SportBooking — Website đặt sân thể thao trực tuyến
 
-Đồ án cử nhân CNTT — Hà Thế Hưng (211211680).
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-Express_5-339933?logo=nodedotjs&logoColor=white)
+![SQL Server](https://img.shields.io/badge/SQL_Server-mssql-CC2927?logo=microsoftsqlserver&logoColor=white)
 
-Công nghệ: ReactJS + Vite, Node.js + Express.js, SQL Server, REST API
+Hệ thống web giúp khách hàng **tìm sân, xem lịch trống, đặt chỗ và thanh toán trực tuyến** (mô phỏng), đồng thời cung cấp **khu vực quản trị** để vận hành sân, đơn đặt, giá thuê, tin tức và thống kê. Dự án giải quyết bài toán đặt sân thủ công (gọi điện, ghi sổ) bằng nền tảng số minh bạch về lịch và giá.
 
-## Chạy nhanh
+---
+
+## Công nghệ sử dụng
+
+| Tầng | Công nghệ |
+|------|-----------|
+| **Frontend** | React 18, Vite, React Router, Axios, TanStack Query, React Hook Form + Zod, Bootstrap 5, HTML5, CSS3 |
+| **Backend** | Node.js, Express 5 (CommonJS), JWT, bcrypt, Multer, Zod, Pino |
+| **Database & công cụ** | Microsoft SQL Server (`mssql`), Git, Postman, Cursor |
+
+---
+
+## Tính năng chính
+
+### Khách hàng (Customer)
+
+- Đăng ký / đăng nhập (JWT access token + refresh token cookie, mật khẩu bcrypt)
+- Xem trang chủ, tin tức, đối tác, liên hệ
+- Tìm kiếm và lọc sân theo loại, ngày, khung giờ, mức giá
+- Xem chi tiết sân, bảng lịch theo ngày, đặt sân trực tuyến
+- Thanh toán Online (mô phỏng) hoặc thanh toán tại sân
+- Xem lịch sử đơn đặt, lọc theo ngày, xem chi tiết, hủy đơn theo quy định
+- Quản lý hồ sơ cá nhân, đổi mật khẩu
+
+### Quản trị (Admin)
+
+- Dashboard thống kê: doanh thu, hiệu suất sân
+- CRUD loại sân, sân, ảnh sân, bảng giá, ngày nghỉ/bảo trì
+- Duyệt và cập nhật trạng thái đơn đặt, đối soát thanh toán
+- Quản lý người dùng (tìm kiếm, khóa/mở tài khoản)
+- CMS tin tức và đối tác hiển thị trên site
+
+---
+
+## Cấu trúc thư mục dự án
+
+```text
+📦 HTH_211211680_UTC
+ ┣ 📂 database/          # migrations, seeds, SQL_FULL.sql
+ ┣ 📂 backend/
+ ┃  ┣ 📂 src/
+ ┃  ┃  ┣ 📂 API/          # routes + controllers REST /api/v1
+ ┃  ┃  ┣ 📂 modules/      # service + repository nghiệp vụ
+ ┃  ┃  ┣ 📂 config/       # env, database, logger
+ ┃  ┃  ┣ 📂 middlewares/  # auth, validate, upload, ...
+ ┃  ┃  ┗ 📜 server.js
+ ┃  ┣ 📂 scripts/         # migrate.js, seed.js
+ ┃  ┗ 📂 tests/
+ ┣ 📂 frontend/
+ ┃  ┗ 📂 src/
+ ┃     ┣ 📂 app/           # router, providers
+ ┃     ┣ 📂 features/      # client + admin theo module
+ ┃     ┣ 📂 api/           # Axios client
+ ┃     ┗ 📂 styles/
+ ┣ 📂 postman/             # collection & environment
+ ┣ 📂 docs/                # kiểm thử, hướng dẫn verify
+ ┗ 📜 STRUCTURE.md         # chi tiết kiến trúc & API
+```
+
+---
+
+## Hướng dẫn cài đặt & chạy dự án
+
+### Yêu cầu
+
+- Node.js LTS (18+ khuyến nghị)
+- SQL Server đang chạy (local hoặc remote)
+- Git
+
+### 1. Clone repository
+
+```bash
+git clone https://github.com/mase2155/HTH_211211680_UTC.git
+cd HTH_211211680_UTC
+```
+
+### 2. Cài đặt thư viện
+
+**Backend:**
 
 ```powershell
 cd backend
-copy .env.example .env   # chỉnh DB_*, JWT_ACCESS_SECRET, ADMIN_EMAIL / ADMIN_PASSWORD
+copy .env.example .env
 npm install
+```
+
+Chỉnh `backend/.env`: `DB_*`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, ...
+
+**Frontend:**
+
+```powershell
+cd ../frontend
+copy .env.example .env
+npm install
+```
+
+### 3. Cấu hình CSDL
+
+```powershell
+cd backend
 npm run db:migrate
 npm run db:seed
-npm run dev              # tự giải phóng cổng 5000 nếu còn Node cũ
-
-cd ../frontend
-copy .env.example .env   # tùy chọn; mặc định proxy Vite → backend
-npm install
-npm run dev              # tự giải phóng cổng 5173 nếu còn Node cũ
 ```
 
-- Frontend: http://localhost:5173  
-- API: http://localhost:5000/api/v1  
-- Admin: đăng nhập bằng tài khoản tạo từ `ADMIN_*` trong `backend/.env` (sau `db:seed`), vào `/admin`
+Script tạo database (nếu chưa có), chạy migration trong `database/migrations/` và seed dữ liệu mẫu. File gộp tham khảo: `database/SQL_FULL.sql`.
 
-Kiểm thử local (cần CSDL đã migrate/seed):
+### 4. Chạy ứng dụng
+
+**Terminal 1 — API:**
 
 ```powershell
 cd backend
-npm run verify
+npm run dev
 ```
 
-Chi tiết: `docs/local-verify.md`
+Mặc định: `http://localhost:5000` — API prefix `/api/v1`
 
-Build frontend: `cd frontend && npm run build`
+**Terminal 2 — Giao diện:**
 
-## Postman
+```powershell
+cd frontend
+npm run dev
+```
 
-1. Import `postman/SportBooking.postman_environment.json` và `postman/SportBooking.postman_collection.json`.
-2. Sửa biến môi trường: `adminPassword`, `customerEmail` (hoặc register mới), `fieldId`, `timeSlotId`, `bookingDate`.
-3. Chạy **Auth → Login admin** hoặc **Login customer** để lưu `accessToken`.
+Mặc định: `http://localhost:5173` (Vite proxy gọi backend)
 
-Tạo lại collection sau khi sửa script: `node postman/scripts/generate-collection.js`
+- Đăng nhập Admin: tài khoản tạo sau `db:seed` theo `ADMIN_*` trong `.env`, truy cập `/admin`
+- Kiểm thử tự động (đã migrate/seed): `cd backend && npm run verify` (chi tiết: `docs/local-verify.md`)
+- Postman: import `postman/SportBooking.postman_environment.json` và `postman/SportBooking.postman_collection.json`
 
-## Kịch bản kiểm thử
+Build production frontend: `cd frontend && npm run build`
 
-Xem `docs/test-cases.md` (tìm kiếm, 409 trùng slot, hủy đơn, thống kê).
+---
 
-## Cấu trúc
+## Tác giả & Liên hệ
 
-Xem `STRUCTURE.md` (cây thư mục, API, tiến độ). Quy tắc code cho AI: `.cursor/rules/`.
+**Lê Đình Hùng**
 
-## Báo cáo (theo chương đồ án)
+- GitHub: [mase2155](https://github.com/mase2155)
+- Email: dev.hung.utc@gmail.com
 
-| Chương | File | Nội dung |
-|--------|------|----------|
-| 2 — Thiết kế | `reportChap2.md` / `reportChap2.docx` | Use case, ERD, luồng nghiệp vụ |
-| 3 — Backend | `reportChap3.md` | Cài đặt API, CSDL, workflow code |
-| 4 — Giao diện | `reportChap4.md` / `reportChap4.docx` | React, đặt sân / thanh toán / admin |
+---
+
+Đồ án liên quan: **Hà Thế Hưng (211211680)** — CNTT5 K62, GVHD: ThS. Đinh Công Tùng. Tài liệu báo cáo: `reportChap2.md`, `reportChap3.md`, `reportChap4.md`.
